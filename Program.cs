@@ -48,7 +48,11 @@ public class Game : GameWindow
         this.ElementArrayObject = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementArrayObject);
         GL.BufferData(BufferTarget.ElementArrayBuffer, this.indices.Length * sizeof(uint), this.indices, BufferUsageHint.StaticDraw);
-
+        
+        //with BufferData, my vertices are uploaded in the GPU buffer
+        this.vertices = null;
+        //This WORKS !
+        
         GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
         GL.EnableVertexAttribArray(0);
 
