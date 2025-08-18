@@ -1,39 +1,36 @@
 using OpenTK.Graphics.OpenGL;
 
-public class Shader 
+class Shader 
 {
-    public int handle;
+    public int Handler;
 
-    public Shader(string vertexPath, string fragmentPath) 
+    public Shader(string vertexPath, string fragPath) 
     {
         int vertexShader;
-        int fragmentShader;
+        int fragShader;
 
-        string vertexShaderSource = File.ReadAllText(vertexPath);
-        string fragmentShaderSource = File.ReadAllText(fragmentPath);
+        string vertSource = File.ReadAllText(vertexPath);
+        string fragSource = File.ReadAllText(fragPath);
 
         vertexShader = GL.CreateShader(ShaderType.VertexShader);
-        GL.ShaderSource(vertexShader, vertexShaderSource);
+        fragShader = GL.CreateShader(ShaderType.FragmentShader);
 
-        fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-        GL.ShaderSource(fragmentShader, fragmentShaderSource);
+        GL.ShaderSource(vertexShader, vertSource);
+        GL.ShaderSource(fragShader, fragSource);
 
         GL.CompileShader(vertexShader);
-        GL.CompileShader(fragmentShader);
+        GL.CompileShader(fragShader);
 
-        //program
-        this.handle = GL.CreateProgram();
+        //program creation, linking shaders
+        this.Handler = GL.CreateProgram();
+        GL.AttachShader(Handler, vertexShader);
+        GL.AttachShader(Handler, fragShader);
 
-        GL.AttachShader(handle, vertexShader);
-        GL.AttachShader(handle, fragmentShader);
-
-        GL.LinkProgram(handle);
-
-        //thats it unless i detach and delete shaders which is recommended, also should implement IDisposable.
+        GL.LinkProgram(this.Handler);
     }
 
     public void Use() 
     {
-        GL.UseProgram(handle);
+        GL.UseProgram(this.Handler);
     }
 }

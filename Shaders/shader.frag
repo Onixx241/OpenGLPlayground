@@ -1,12 +1,12 @@
-#version 330 core
+#version 330
 
-out vec4 FragColor;
-//this comes from the shader vertex, out from there in to here
-in vec4 vertexColor;
+out vec4 outputColor;
 
-uniform vec4 uniColor;
+in vec2 texCoord;
+
+uniform sampler2D texture0;
 
 void main()
 {
-	FragColor = uniColor;
+    outputColor = texture(texture0, texCoord);
 }

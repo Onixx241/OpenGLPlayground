@@ -2,42 +2,49 @@
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using System.Diagnostics;
-using System.Timers;
 
-public class Game : GameWindow 
+public class Game: GameWindow
 {
-
+    //this is my triangle
     float[] vertices = 
     {
-        -0.5f,0.5f,0.0f,//left top 
-        -0.5f,-0.5f,0.0f,//left bottom
-        0.5f,-0.5f,0.0f,//right bottom
-        0.5f,0.5f,0.0f//right top
+        -0.5f,0.5f,0.0f, 0.0f,1.0f, // top left 0
+        0.5f,-0.5f,0.0f, 1.0f,0.0f, // bottom right 1 
+        -0.5f,-0.5f,0.0f, 0.0f,0.0f, // bottom left 2 
+        0.5f,0.5f,0.0f, 1.0f,1.0f// top right 3
     };
 
     uint[] indices =
     {
-        0,1,3,
+        0,2,3,
         1,2,3
     };
-    private int VertexArrayObject;
-    private int VertexBufferObject;
-    private int ElementArrayObject;
 
-    private Shader _shader;
-    private Stopwatch _timer { get; set; } = new Stopwatch();
+    int VertexBufferObject;
+    int VertexArrayObject;
 
-    public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() {ClientSize=(width,height), Title = title }) 
+    int ElementBufferObject;
+
+    Shader shader;
+    Texture tex;
+
+    //stopwatch for oscillation
+    Stopwatch newstop = new Stopwatch();
+
+    public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() {ClientSize = (width, height), Title = title }) 
     {
     }
 
     protected override void OnLoad()
     {
         base.OnLoad();
-        GL.ClearColor(0.3f, 0.2f, 0.5f, 1.0f);
+        GL.ClearColor(0.1f, 0.2f, 0.3f, 1.0f);
 
-        //buffer stuff here 
+        this.shader = new Shader("Shaders\\shader.vert", "Shaders\\shader.frag");
+
+        //gen and bind buffers here
         this.VertexArrayObject = GL.GenVertexArray();
         GL.BindVertexArray(this.VertexArrayObject);
 
@@ -45,41 +52,34 @@ public class Game : GameWindow
         GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, this.vertices.Length * sizeof(float), this.vertices, BufferUsageHint.StaticDraw);
 
-        this.ElementArrayObject = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementArrayObject);
-        GL.BufferData(BufferTarget.ElementArrayBuffer, this.indices.Length * sizeof(uint), this.indices, BufferUsageHint.StaticDraw);
-        
-        //with BufferData, my vertices are uploaded in the GPU buffer
-        this.vertices = null;
-        //This WORKS !
-        
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
+        this.ElementBufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObject);
+        GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), this.indices, BufferUsageHint.StaticDraw);
+
         GL.EnableVertexAttribArray(0);
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
 
-        //put shader here
-        this._shader = new Shader("Shaders\\shader.vert", "Shaders\\shader.frag");
+        int texCoordLocation = GL.GetAttribLocation(this.shader.Handler, "aTexCoord");
+        GL.EnableVertexAttribArray(texCoordLocation);
+        GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
 
-        this._timer.Start();
+        this.tex = new Texture("Textures\\opentexture.jpg");
+        this.tex.Use();
+
+
+
     }
 
     protected override void OnRenderFrame(FrameEventArgs args)
     {
         base.OnRenderFrame(args);
-
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
-        //code here.
-        this._shader.Use();
+        //render stuff here
+        this.tex.Use();
+        this.shader.Use();
 
-        double timeVal = _timer.Elapsed.TotalSeconds;
-        float greenVal = (float)Math.Sin(timeVal) / 2.0f + 0.5f;
-        int vertexColorLocation = GL.GetUniformLocation(this._shader.handle, "uniColor");
-        GL.Uniform4(vertexColorLocation, 1.0f, greenVal, 0.0f, 1.0f);
-
-
-        GL.BindVertexArray(VertexArrayObject);
         GL.DrawElements(PrimitiveType.Triangles, this.indices.Length, DrawElementsType.UnsignedInt, 0);
-
 
         SwapBuffers();
     }
@@ -88,9 +88,9 @@ public class Game : GameWindow
     {
         base.OnUpdateFrame(args);
 
-        if (KeyboardState.IsKeyReleased(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Space)) 
+        if (KeyboardState.IsKeyReleased(Keys.Space)) 
         {
-            Console.WriteLine("Space is pressed!");
+            Console.WriteLine("Space is pressed and window is closing!");
             Close();
         }
     }
@@ -106,7 +106,8 @@ public class Program
 {
     public static void Main() 
     {
-        Game game = new Game(800,600,"Hello Triangle!");
+        Game game = new Game(600,480,"Hello TK!");
+
         game.Run();
     }
 }
