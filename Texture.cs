@@ -6,7 +6,17 @@ public class Texture
 {
     public int handle;
 
-    public Texture(string Path) 
+    public Texture() 
+    {
+    }
+
+    public void Use() 
+    {
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, handle);
+    }
+
+    public void UseTexture(string path)
     {
         this.handle = GL.GenTexture();
 
@@ -14,7 +24,7 @@ public class Texture
 
         StbImage.stbi_set_flip_vertically_on_load(1);
 
-        ImageResult img = ImageResult.FromStream(File.OpenRead(Path), ColorComponents.RedGreenBlueAlpha);
+        ImageResult img = ImageResult.FromStream(File.OpenRead(path), ColorComponents.RedGreenBlueAlpha);
 
         GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, img.Width, img.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, img.Data);
 
@@ -22,12 +32,5 @@ public class Texture
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToBorder);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToBorder);
-
-    }
-
-    public void Use() 
-    {
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, handle);
     }
 }
