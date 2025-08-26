@@ -63,8 +63,7 @@ public class Game: GameWindow
         GL.EnableVertexAttribArray(texCoordLocation);
         GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
 
-        this.tex = new Texture("Textures\\opentexture.jpg");
-        this.tex.Use();
+        
 
 
 
@@ -76,7 +75,6 @@ public class Game: GameWindow
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
         //render stuff here
-        this.tex.Use();
         this.shader.Use();
 
         GL.DrawElements(PrimitiveType.Triangles, this.indices.Length, DrawElementsType.UnsignedInt, 0);
@@ -90,9 +88,21 @@ public class Game: GameWindow
 
         if (KeyboardState.IsKeyReleased(Keys.Space)) 
         {
-            Console.WriteLine("Space is pressed and window is closing!");
-            Close();
+            Console.WriteLine("Brick Texture!");
+            this.tex = new Texture();
+            this.tex.SetTexture("Textures\\opentexture.jpg");
+            this.tex.Use();
+;       }
+
+
+        if (KeyboardState.IsKeyReleased(Keys.Comma))
+        {
+            Console.WriteLine("Crate Texure!");
+            this.tex = new Texture();
+            this.tex.SetTexture("Textures\\container.jpg");
+            this.tex.Use();
         }
+
     }
 
     protected override void OnResize(ResizeEventArgs e)
