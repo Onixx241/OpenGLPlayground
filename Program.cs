@@ -1,71 +1,65 @@
-﻿using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System.Diagnostics;
+using StbImageSharp;
+using System.Runtime.CompilerServices;
 
-public class Game: GameWindow
+public class MainClas : GameWindow 
 {
-    //this is my triangle
     float[] vertices = 
     {
-        -0.5f,0.5f,0.0f, 0.0f,1.0f, // top left 0
-        0.5f,-0.5f,0.0f, 1.0f,0.0f, // bottom right 1 
-        -0.5f,-0.5f,0.0f, 0.0f,0.0f, // bottom left 2 
-        0.5f,0.5f,0.0f, 1.0f,1.0f// top right 3
+        0.5f,0.5f,0.0f,
+        0.5f,-0.5f,0.0f,
+        -0.5f,-0.5f,0.0f,
+        -0.5f,0.5f,0.0f
     };
 
-    uint[] indices =
+    uint[] indices = 
     {
-        0,2,3,
-        1,2,3
+        0,1,2,
+        0,2,3
     };
 
     int VertexBufferObject;
     int VertexArrayObject;
-
     int ElementBufferObject;
 
-    Shader shader;
-    Texture tex;
+    Shader newShade;
 
-    //stopwatch for oscillation
-    Stopwatch newstop = new Stopwatch();
-
-    public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() {ClientSize = (width, height), Title = title }) 
+    public MainClas(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() {ClientSize = (width, height), Title = title })
     {
     }
 
     protected override void OnLoad()
     {
         base.OnLoad();
-        GL.ClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+        GL.ClearColor(0.5f,0.2f,0.1f,1.0f);
 
-        this.shader = new Shader("Shaders\\shader.vert", "Shaders\\shader.frag");
+        this.newShade = new Shader("Shaders\\shader.vert", "Shaders\\shader.frag");
+        this.newShade.CompileShaders();
 
-        //gen and bind buffers here
+
         this.VertexArrayObject = GL.GenVertexArray();
         GL.BindVertexArray(this.VertexArrayObject);
 
         this.VertexBufferObject = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
+        GL.BindBuffer(BufferTarget.ArrayBuffer,this.VertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, this.vertices.Length * sizeof(float), this.vertices, BufferUsageHint.StaticDraw);
 
         this.ElementBufferObject = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObject);
-        GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), this.indices, BufferUsageHint.StaticDraw);
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, this.ElementBufferObject);
+        GL.BufferData(BufferTarget.ElementArrayBuffer, this.indices.Length * sizeof(uint), this.indices, BufferUsageHint.StaticDraw);
 
+        //this still works because once you use bufferdata the data is in your gpu
+        this.VertexBufferObject = 0;
+
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
         GL.EnableVertexAttribArray(0);
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
-
-        int texCoordLocation = GL.GetAttribLocation(this.shader.Handler, "aTexCoord");
-        GL.EnableVertexAttribArray(texCoordLocation);
-        GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
-
-        
 
 
+        newShade.Use();
 
     }
 
@@ -74,12 +68,16 @@ public class Game: GameWindow
         base.OnRenderFrame(args);
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
-        //render stuff here
-        this.shader.Use();
-
+        newShade.Use();
         GL.DrawElements(PrimitiveType.Triangles, this.indices.Length, DrawElementsType.UnsignedInt, 0);
 
         SwapBuffers();
+    }
+
+    protected override void OnResize(ResizeEventArgs e)
+    {
+        base.OnResize(e);
+        GL.Viewport(0, 0, e.Width, e.Height);
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args)
@@ -88,35 +86,75 @@ public class Game: GameWindow
 
         if (KeyboardState.IsKeyReleased(Keys.Space)) 
         {
-            Console.WriteLine("Brick Texture!");
-            this.tex = new Texture();
-            this.tex.SetTexture("Textures\\opentexture.jpg");
-            this.tex.Use();
-;       }
 
+            SetVertices([0.1f, 0.2f, 0.0f,
+        0.1f, -0.3f, 0.0f,
+        -0.1f, -0.2f, 0.0f,
+        -0.2f, 0.3f, 0.0f]);
 
-        if (KeyboardState.IsKeyReleased(Keys.Comma))
+        }
+
+        if (KeyboardState.IsKeyReleased(Keys.Period)) 
         {
-            Console.WriteLine("Crate Texure!");
-            this.tex = new Texture();
-            this.tex.SetTexture("Textures\\container.jpg");
-            this.tex.Use();
+            SetVertices([0.5f,0.5f,0.0f,
+        0.5f,-0.5f,0.0f,
+        -0.5f,-0.5f,0.0f,
+        -0.5f,0.5f,0.0f]);
+
+        }
+
+        if (KeyboardState.IsKeyReleased(Keys.Apostrophe)) 
+        {
+            MoveLeft();
         }
 
     }
 
-    protected override void OnResize(ResizeEventArgs e)
+    public float[] SetVertices(float[] vertices) 
     {
-        base.OnResize(e);
-        GL.Viewport(0, 0, e.Width, e.Height);
+        this.vertices = vertices;
+        foreach (var vertex in this.vertices)
+            Console.WriteLine(vertex + "\n----");
+
+        GL.BufferData(BufferTarget.ArrayBuffer, this.vertices.Length * sizeof(float), this.vertices, BufferUsageHint.StaticDraw);
+        return vertices;
+    }
+
+    public void SetIndices(uint[] indices) 
+    {
+        this.indices = indices;
+    }
+
+    //this definitley does NOT move left lol
+    public void MoveLeft() 
+    {
+        float[] LeftArr = 
+        [-0.01f,-0.01f,0.0f,
+        -0.01f,-0.01f,0.0f,
+        -0.01f,-0.01f,0.0f,
+        -0.01f,-0.01f,0.0f];
+
+        float[] newarr;
+
+        for (int i = 0; i < vertices.Length - 1; i++) 
+        {
+            vertices[i] = vertices[i] - LeftArr[i];
+        }
+
+        GL.BufferData(BufferTarget.ArrayBuffer, this.vertices.Length * sizeof(float), this.vertices, BufferUsageHint.StaticDraw);
+
+
+        foreach (var vertex in this.vertices)
+            Console.WriteLine(vertex + "\n----");
+
     }
 }
 
-public class Program 
+class Program 
 {
     public static void Main() 
     {
-        Game game = new Game(600,480,"Hello TK!");
+        MainClas game = new MainClas(600, 480, "Opentk");
 
         game.Run();
     }
